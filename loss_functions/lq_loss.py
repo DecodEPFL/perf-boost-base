@@ -52,3 +52,6 @@ class LQLossFH():
         # average over the samples
         loss_val = torch.sum(loss_val, 0)/xs.shape[0]       # shape = (1, 1)
         return loss_val
+
+    def __call__(self, *args, **kwds):
+        return self.forward(*args, **kwds)

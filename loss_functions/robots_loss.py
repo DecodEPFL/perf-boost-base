@@ -88,6 +88,9 @@ class RobotsLoss(LQLossFH):
         loss_val = torch.sum(loss_val, 0)/xs.shape[0]       # shape = (1, 1)
         return loss_val
 
+    def __call__(self, *args, **kwds):
+        return self.forward(*args, **kwds)
+    
     def f_loss_obst(self, x_batched):
         """
         Obstacle avoidance loss.

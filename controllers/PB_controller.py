@@ -23,10 +23,12 @@ class PerfBoostController(nn.Module):
                  input_init: torch.Tensor,
                  output_init: torch.Tensor,
                  nn_type: str = "REN",
-                 non_linearity: str = None,
-                 # acyclic REN properties
                  dim_internal: int = 8,
                  dim_nl: int = 8,
+                 # SSM properties
+                 scaffolding_nonlin: str = None,
+                 dim_middle: int = 6,
+                 # acyclic REN properties
                  initialization_std: float = 0.5,
                  pos_def_tol: float = 0.001,
                  contraction_rate_lb: float = 1.0,
@@ -77,9 +79,9 @@ class PerfBoostController(nn.Module):
             self.emme = DeepSSM(self.dim_in,
                                 self.dim_out,
                                 dim_internal,
-                                dim_middle=6,
+                                dim_middle=dim_middle,
                                 dim_hidden=dim_nl,
-                                non_linearity=non_linearity
+                                scaffolding_nonlin=scaffolding_nonlin
                                 ).to(device)
         else:
             raise ValueError("Model for emme not implemented")

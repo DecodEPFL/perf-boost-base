@@ -77,7 +77,7 @@ class LRU(nn.Module):
         lambda_c = torch.complex(lambda_re, lambda_im)  # A matrix
         gammas = torch.exp(self.gamma_log)
 
-        self.x = lambda_c * self.x + gammas * F.linear(torch.complex(u_in, torch.zeros(1)), self.B)
+        self.x = lambda_c * self.x + gammas * F.linear(torch.complex(u_in, torch.zeros(1, device=self.B.device)), self.B)
         y_out = 2 * F.linear(self.x, self.C).real + F.linear(u_in, self.D)
         return y_out
 

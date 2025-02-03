@@ -107,7 +107,7 @@ class CouplingLayer(nn.Module):
         super(CouplingLayer, self).__init__()
 
         self.dim_inputs = dim_inputs
-        self.mask = torch.arange(0, dim_inputs) % 2  # alternating inputs
+        self.register_buffer('mask', torch.arange(0, dim_inputs) % 2)   # alternating inputs
 
         self.scale_net = FCNN(dim_in=dim_inputs, dim_out=dim_inputs, dim_hidden=dim_hidden)
         self.translate_net = FCNN(dim_in=dim_inputs, dim_out=dim_inputs, dim_hidden=dim_hidden)

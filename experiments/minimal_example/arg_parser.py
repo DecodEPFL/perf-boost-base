@@ -24,7 +24,7 @@ def argument_parser():
     parser.add_argument('--nn-type', type=str, default='SSM',
                         help='Type of the NN for operator Emme in controller. Options: REN or SSM. Default is REN')
     parser.add_argument('--non-linearity', type=str, default='coupling_layers',
-                        help='Type of non_linearity in SSMs. Options: MLP, coupling_layers, hamiltonian, tanh. '
+                        help='Type of scaffolding_nonlin in SSMs. Options: MLP, coupling_layers, hamiltonian, tanh. '
                              'Default coupling_layers.')
     parser.add_argument('--cont-init-std', type=float, default=0.1,
                         help='Initialization std for controller params. Default is 0.1.')
@@ -109,7 +109,7 @@ def print_args(args):
     if args.nn_type == 'REN':
         msg += ' -- cont_init_std: %.2f' % args.cont_init_std
     if args.nn_type == 'SSM':
-        msg += ' -- non_linearity: %s' % args.non_linearity
+        msg += ' -- scaffolding_nonlin: %s' % args.scaffolding_nonlin
 
     msg += '\n[INFO] Loss:  alpha_u: %.6f' % args.alpha_u
     msg += ' -- alpha_col: %.f' % args.alpha_col if args.col_av else ' -- no collision avoidance'

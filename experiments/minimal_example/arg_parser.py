@@ -23,7 +23,7 @@ def argument_parser():
     # controller
     parser.add_argument('--nn-type', type=str, default='SSM',
                         help='Type of the NN for operator Emme in controller. Options: REN or SSM. Default is REN')
-    parser.add_argument('--non-linearity', type=str, default='coupling_layers',
+    parser.add_argument('--scaffolding-nonlin', type=str, default='coupling_layers',
                         help='Type of scaffolding_nonlin in SSMs. Options: MLP, coupling_layers, hamiltonian, tanh. '
                              'Default coupling_layers.')
     parser.add_argument('--cont-init-std', type=float, default=0.1,

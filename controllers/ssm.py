@@ -168,6 +168,9 @@ class DeepSSM(nn.Module):
         self.ssm1 = SSM(dim_in, dim_middle, dim_internal, dim_hidden=dim_hidden, scaffolding_nonlin=scaffolding_nonlin)
         self.ssm2 = SSM(dim_middle, dim_out, dim_internal, dim_hidden=dim_hidden, scaffolding_nonlin=scaffolding_nonlin)
 
+        # count number of parameters
+        self.num_params = sum(p.numel() for p in self.parameters())
+
     def forward(self, u_in):
         y_out = self.ssm2(self.ssm1(u_in))
         return y_out

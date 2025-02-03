@@ -210,7 +210,7 @@ class PerfBoostController(nn.Module):
 
         # Initialize best valid loss and best parameters
         if return_best:
-            best_valid_loss = float('inf')
+            best_valid_loss = 1e6
             best_params = self.state_dict()
         # Queue to store the last n_logs_no_change validation improvements
         if early_stopping:

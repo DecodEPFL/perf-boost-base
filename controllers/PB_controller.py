@@ -43,7 +43,7 @@ class PerfBoostController(nn.Module):
             output_init (torch.Tensor):   Initial output from the controller before anything is calculated.
             nn_type (str):                Which NN model to use for the Emme operator (Options: 'REN' or 'SSM')
             non_linearity (str):          Non-linearity used in SSMs for scaffolding.
-            output_amplification (float): TODO
+            output_amplification (float): Scaling factor applied to the controller output. Default is 20.
             ##### the following are the same as AcyclicREN args:
             dim_internal (int):           Internal state (x) dimension.
             dim_nl (int):                 Dimension of the input ("v") and output ("w") of the NL static block of REN.
@@ -196,7 +196,7 @@ class PerfBoostController(nn.Module):
             idx = idx_next
         assert idx_next == value.shape[-1]
 
-    def __call__(self, *args, **kwargs):  # CLARA: Why do we need this function? Isn't it implemented in nn.Module?
+    def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
 
     def fit(

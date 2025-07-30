@@ -26,8 +26,8 @@ logger = WrapLogger(logger)
 
 # ----- parse and set experiment arguments -----
 args = argument_parser()
-# msg = print_args(args)    # TODO
-# logger.info(msg)
+msg = print_args(args)
+logger.info(msg)
 torch.manual_seed(args.random_seed)
 
 # ------------ 1. Dataset ------------

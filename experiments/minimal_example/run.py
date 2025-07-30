@@ -17,13 +17,8 @@ from assistive_functions import WrapLogger
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# ----- Overwriting arguments -----  # TODO: remove and put it in argsparse
+# ----- Configuration -----
 args = argument_parser()
-args.epochs = 500  # 5000
-args.log_epoch = args.epochs//10 if args.epochs//10 > 0 else 1
-args.nn_type = "SSM"
-args.non_linearity = "tanh"  # "hamiltonian"  # "coupling_layers"
-args.batch_size = 1
 
 # ----- SET UP LOGGER -----
 now = datetime.now().strftime("%m_%d_%H_%M_%S")
@@ -81,7 +76,7 @@ ctl = PerfBoostController(noiseless_forward=sys.noiseless_forward,
                           dim_internal=args.dim_internal,
                           dim_nl=args.dim_nl,
                           initialization_std=args.cont_init_std,
-                          output_amplification=1,  # TODO: Note that this used to be 20!
+                          output_amplification=20,
                           ).to(device)
 # plot closed-loop trajectories before training the controller
 logger.info('Plotting closed-loop trajectories before training the controller...')
@@ -116,8 +111,7 @@ ctl.fit(
 # ------ 6. Save and evaluate the trained model ------
 # save
 res_dict = ctl.emme.state_dict()
-# TODO: append args
-res_dict['Q'] = Q
+res_dict['Q'] = Q  # Include loss function parameters for completeness
 filename = os.path.join(save_folder, 'trained_controller'+'.pt')
 torch.save(res_dict, filename)
 logger.info('[INFO] saved trained model.')

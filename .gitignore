@@ -166,3 +166,4 @@ cython_debug/
 
 experiments/*/saved_results/
 *.pkl
+experiments/minimal_example/saved_results/data_T100_stdini0.2_agents2_RS5.pkl

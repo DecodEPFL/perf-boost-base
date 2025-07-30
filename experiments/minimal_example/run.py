@@ -1,10 +1,12 @@
-import os
+import os, sys
 import logging
 import torch
-import time
-import copy
 from datetime import datetime
 from torch.utils.data import DataLoader
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+print(BASE_DIR)
+sys.path.insert(1, BASE_DIR)
 
 from config import device
 from arg_parser import argument_parser, print_args
@@ -14,8 +16,6 @@ from controllers.PB_controller import PerfBoostController
 from loss_functions import RobotsLoss
 from assistive_functions import WrapLogger
 
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ----- Configuration -----
 args = argument_parser()

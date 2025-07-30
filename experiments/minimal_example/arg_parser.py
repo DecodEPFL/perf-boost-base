@@ -34,6 +34,13 @@ def argument_parser():
     parser.add_argument('--dim-nl', type=int, default=8, help='size of the non-linear part of REN or hidden layers of SSM. Default is 8.')
     parser.add_argument('--output-amplification', type=float, default=1.0,
                         help='Scaling factor applied to the controller output. Default is 1.0.') # TODO: Note that this used to be 20!
+    # SSM-specific parameters
+    parser.add_argument('--rmin', type=float, default=0.9,
+                        help='Minimum radius for SSM LRU initialization. Default is 0.9.')
+    parser.add_argument('--rmax', type=float, default=1.0,
+                        help='Maximum radius for SSM LRU initialization. Default is 1.0.')
+    parser.add_argument('--max-phase', type=float, default=6.283,
+                        help='Maximum phase for SSM LRU initialization. Default is 6.283 (2*pi).')
 
     # loss
     parser.add_argument('--alpha-u', type=float, default=0.1/400, help='Weight of the loss due to control input "u". Default is 0.1/400.') # Note: should use output_amplification^2 instead of 400? makes sense to depend on amplification
@@ -104,6 +111,7 @@ def print_args(args):
         msg += ' -- cont_init_std: %.2f' % args.cont_init_std
     if args.nn_type == 'SSM':
         msg += ' -- scaffolding_nonlin: %s' % args.scaffolding_nonlin
+        msg += ' -- rmin: %.2f' % args.rmin + ' -- rmax: %.2f' % args.rmax + ' -- max_phase: %.3f' % args.max_phase
 
     msg += '\n[INFO] Loss:  alpha_u: %.6f' % args.alpha_u
     msg += ' -- alpha_col: %.f' % args.alpha_col if args.col_av else ' -- no collision avoidance'

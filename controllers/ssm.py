@@ -17,7 +17,7 @@ class LRU(nn.Module):
                  out_features: int,
                  state_features: int,
                  scan: bool = True,  # This has been removed
-                 rmin: float = 0.9,
+                 rmin: float = 0.99,
                  rmax: float = 1.,
                  max_phase: float = 6.283,
                  internal_state_init=None
@@ -89,8 +89,8 @@ class SSM(nn.Module):
                  dim_in: int,
                  dim_out: int,
                  dim_internal: int,
-                 scan: bool = False,
                  dim_hidden: int = 30,
+                 scan: bool = False,
                  rmin: float = 0.95,
                  rmax: float = 0.99,
                  max_phase: float = 6.283,
@@ -149,7 +149,7 @@ class DeepSSM(nn.Module):
                  dim_internal: int,
                  dim_middle: int,
                  dim_hidden: int = 30,
-                 # scan: bool,
+                 scan: bool = False,
                  # n_ssm: int,
                  rmin: float = 0.9,
                  rmax: float = 1,
@@ -165,8 +165,16 @@ class DeepSSM(nn.Module):
         self.dim_internal = dim_internal
         self.dim_hidden = dim_hidden
 
-        self.ssm1 = SSM(dim_in, dim_middle, dim_internal, dim_hidden=dim_hidden, scaffolding_nonlin=scaffolding_nonlin)
-        self.ssm2 = SSM(dim_middle, dim_out, dim_internal, dim_hidden=dim_hidden, scaffolding_nonlin=scaffolding_nonlin)
+        self.ssm1 = SSM(
+            dim_in=dim_in, dim_out=dim_middle, dim_internal=dim_internal, dim_hidden=dim_hidden, 
+            scan=scan, rmin=rmin, rmax=rmax, max_phase=max_phase, scaffolding_nonlin=scaffolding_nonlin,
+            internal_state_init=internal_state_init
+        )
+        self.ssm2 = SSM(
+            dim_in=dim_middle, dim_out=dim_out, dim_internal=dim_internal, dim_hidden=dim_hidden, 
+            scan=scan, rmin=rmin, rmax=rmax, max_phase=max_phase, scaffolding_nonlin=scaffolding_nonlin,
+            internal_state_init=internal_state_init
+        )
 
         # count number of parameters
         self.num_params = sum(p.numel() for p in self.parameters())

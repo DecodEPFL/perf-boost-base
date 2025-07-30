@@ -80,10 +80,9 @@ def plot_trajectories(
                 filename+'_trajectories' + formatted_date +'.pdf'),
             format='pdf'
         )
-        plt.close()
     else:
         plt.show()
-
+    plt.close(fig)
 
 def plot_traj_vs_time(t_end, n_agents, x, u=None, text="", save=True, filename=''):
     filename = filename if filename=='' else filename+'_'
@@ -123,6 +122,6 @@ def plot_traj_vs_time(t_end, n_agents, x, u=None, text="", save=True, filename='
             ),
             format='pdf'
         )
-        plt.close()
     else:
         plt.show()
+    plt.close()

@@ -16,7 +16,6 @@ from controllers.PB_controller import PerfBoostController
 from loss_functions import RobotsLoss
 from assistive_functions import WrapLogger
 
-
 # ----- Configuration -----
 args = argument_parser()
 
@@ -75,6 +74,9 @@ ctl = PerfBoostController(noiseless_forward=sys.noiseless_forward,
                           scaffolding_nonlin=args.scaffolding_nonlin,
                           dim_internal=args.dim_internal,
                           dim_nl=args.dim_nl,
+                          rmin=args.rmin,
+                          rmax=args.rmax,
+                          max_phase=args.max_phase,
                           initialization_std=args.cont_init_std,
                           output_amplification=args.output_amplification,
                           ).to(device)
@@ -86,7 +88,12 @@ plot_trajectories(
     x_log[0, :, :],  # remove extra dim due to batching
     dataset.xbar, sys.n_agents, filename=filename, text="CL - before training", T=t_ext
 )
-plot_traj_vs_time(args.horizon, sys.n_agents, x_log[0, :args.horizon, :], u_log[0, :args.horizon, :], save=False)
+plot_traj_vs_time(
+    args.horizon, sys.n_agents, 
+    x_log[0, :args.horizon, :], u_log[0, :args.horizon, :], 
+    filename = os.path.join(save_folder, 'Traj_init.pdf'),
+    text="Trajectories - initial controller"
+)
 total_n_params = sum(p.numel() for p in ctl.parameters() if p.requires_grad)
 logger.info("[INFO] Number of parameters: %i" % total_n_params)
 
@@ -157,4 +164,9 @@ plot_trajectories(
     obstacle_centers=loss_fn.obstacle_centers,
     obstacle_covs=loss_fn.obstacle_covs
 )
-plot_traj_vs_time(args.horizon, sys.n_agents, x_log[0, :args.horizon, :], u_log[0, :args.horizon, :], save=False)
+plot_traj_vs_time(
+    args.horizon, 
+    sys.n_agents, x_log[0, :args.horizon, :], u_log[0, :args.horizon, :], 
+    filename = os.path.join(save_folder, 'Traj_trained.pdf'),
+    text="Trajectories - trained controller"
+)

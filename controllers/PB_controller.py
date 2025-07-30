@@ -28,6 +28,9 @@ class PerfBoostController(nn.Module):
                  # SSM properties
                  scaffolding_nonlin: str = None,
                  dim_middle: int = 6,
+                 rmin: float = 0.9,
+                 rmax: float = 1.0,
+                 max_phase: float = 6.283,
                  # acyclic REN properties
                  initialization_std: float = 0.5,
                  pos_def_tol: float = 0.001,
@@ -44,6 +47,10 @@ class PerfBoostController(nn.Module):
             nn_type (str):                Which NN model to use for the Emme operator (Options: 'REN' or 'SSM')
             non_linearity (str):          Non-linearity used in SSMs for scaffolding.
             output_amplification (float): Scaling factor applied to the controller output. Default is 20.
+            ##### SSM-specific args:
+            rmin (float):                 [Optional] Minimum radius for SSM LRU initialization. Default is 0.9.
+            rmax (float):                 [Optional] Maximum radius for SSM LRU initialization. Default is 1.0.
+            max_phase (float):            [Optional] Maximum phase for SSM LRU initialization. Default is 6.283.
             ##### the following are the same as AcyclicREN args:
             dim_internal (int):           Internal state (x) dimension.
             dim_nl (int):                 Dimension of the input ("v") and output ("w") of the NL static block of REN.
@@ -76,13 +83,19 @@ class PerfBoostController(nn.Module):
             ).to(device)
         elif nn_type == "SSM":
             # define the SSM
-            self.emme = DeepSSM(self.dim_in,
-                                self.dim_out,
-                                dim_internal,
-                                dim_middle=dim_middle,
-                                dim_hidden=dim_nl,
-                                scaffolding_nonlin=scaffolding_nonlin
-                                ).to(device)
+            self.emme = DeepSSM(
+                dim_in=self.dim_in,
+                dim_out=self.dim_out,
+                dim_internal=dim_internal,
+                dim_middle=dim_middle,
+                dim_hidden=dim_nl,
+                scan=False,
+                rmin=rmin,
+                rmax=rmax,
+                max_phase=max_phase,
+                internal_state_init=None,
+                scaffolding_nonlin=scaffolding_nonlin
+            ).to(device)
         else:
             raise ValueError("Model for emme not implemented")
 

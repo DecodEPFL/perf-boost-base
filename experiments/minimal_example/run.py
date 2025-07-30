@@ -76,7 +76,7 @@ ctl = PerfBoostController(noiseless_forward=sys.noiseless_forward,
                           dim_internal=args.dim_internal,
                           dim_nl=args.dim_nl,
                           initialization_std=args.cont_init_std,
-                          output_amplification=20,
+                          output_amplification=args.output_amplification,
                           ).to(device)
 # plot closed-loop trajectories before training the controller
 logger.info('Plotting closed-loop trajectories before training the controller...')

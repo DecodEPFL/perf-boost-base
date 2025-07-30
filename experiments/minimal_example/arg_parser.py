@@ -32,9 +32,11 @@ def argument_parser():
                         help='Dimension of the internal state of the controller. '
                              'Adjusts the size of the linear part of REN. Default is 8.')
     parser.add_argument('--dim-nl', type=int, default=8, help='size of the non-linear part of REN or hidden layers of SSM. Default is 8.')
+    parser.add_argument('--output-amplification', type=float, default=1.0,
+                        help='Scaling factor applied to the controller output. Default is 1.0.') # TODO: Note that this used to be 20!
 
     # loss
-    parser.add_argument('--alpha-u', type=float, default=0.1/400, help='Weight of the loss due to control input "u". Note: 400 is output_amplification^2. Default is 0.1/400.')
+    parser.add_argument('--alpha-u', type=float, default=0.1/400, help='Weight of the loss due to control input "u". Default is 0.1/400.') # Note: should use output_amplification^2 instead of 400? makes sense to depend on amplification
     parser.add_argument('--alpha-col', type=float, default=100, help='Weight of the collision avoidance loss. Default is 100 if "col-av" is True, else None.')
     parser.add_argument('--alpha-obst', type=float, default=5e3, help='Weight of the obstacle avoidance loss. Default is 5e3 if "obst-av" is True, else None.')
     parser.add_argument('--min-dist', type=float, default=1.0, help='Minimum distance between agents for collision avoidance. Default is 1.0 if "col-av" is True, else None.')
@@ -97,6 +99,7 @@ def print_args(args):
 
     msg += '\n[INFO] Controller using %ss: dimension of the internal state: %i' % (args.nn_type, args.dim_internal)
     msg += ' -- dim_nl: %i' % args.dim_nl
+    msg += ' -- output_amplification: %.1f' % args.output_amplification
     if args.nn_type == 'REN':
         msg += ' -- cont_init_std: %.2f' % args.cont_init_std
     if args.nn_type == 'SSM':

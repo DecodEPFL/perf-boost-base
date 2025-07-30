@@ -106,7 +106,7 @@ class RobotsLoss(LQLossFH):
         qy = x_batched[:, :, 1::4, :]   # y of all agents. shape = (S, T, n_agents, 1)
         # batched over all samples and all times of [x agent 1, y agent 1, ..., x agent n, y agent n]
         q = torch.cat((qx,qy), dim=-1).view(x_batched.shape[0], x_batched.shape[1], 1,-1).squeeze(dim=2)    # shape = (S, T, 2*n_agents)
-        # sum up loss due to each obstacle #TODO
+        # Sum up loss due to each obstacle
         for ind, (center, cov) in enumerate(zip(self.obstacle_centers, self.obstacle_covs)):
             if ind == 0:
                 loss_obst = normpdf(q, mu=center, cov=cov)   # shape = (S, T)

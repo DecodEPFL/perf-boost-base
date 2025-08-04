@@ -8,6 +8,7 @@ from collections import OrderedDict
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(1, BASE_DIR)
 
+from config import device
 from controllers.non_linearities import MLP, HamiltonianSIE, CouplingLayer
 
 
@@ -110,20 +111,21 @@ class SSM(nn.Module):
         self.dim_scaffolding = dim_scaffolding
 
         if scaffolding_nonlin == "MLP":
-            self.scaffold = MLP(dim_out, dim_scaffolding, dim_out)
+            self.scaffold = MLP(dim_out, dim_scaffolding, dim_out).to(device)
         elif scaffolding_nonlin == "coupling_layers":
             # Option 2: coupling (or invertible) layers
-            self.scaffold = CouplingLayer(dim_out, dim_scaffolding)
+            self.scaffold = CouplingLayer(dim_out, dim_scaffolding).to(device)
         elif scaffolding_nonlin == "hamiltonian":
             # Option 3: Hamiltonian net
-            self.scaffold = HamiltonianSIE(n_layers=4, nf=dim_out, bias=False)
+            self.scaffold = HamiltonianSIE(n_layers=4, nf=dim_out, bias=False).to(device)
         elif scaffolding_nonlin == "tanh":
-            self.scaffold = torch.tanh
+            self.scaffold = torch.tanh.to(device)
         else:
             # End options
             raise NotImplementedError("The scaffolding_nonlin %s is not implemented" % scaffolding_nonlin)
-        self.lru = LRU(dim_in, dim_out, dim_internal, scan, rmin, rmax, max_phase, internal_state_init)
-        self.lin = nn.Linear(dim_in, dim_out, bias=False)
+    
+        self.lru = LRU(dim_in, dim_out, dim_internal, scan, rmin, rmax, max_phase, internal_state_init).to(device)
+        self.lin = nn.Linear(dim_in, dim_out, bias=False).to(device)
 
         self.training_param_names = self.state_dict().keys()
 
@@ -144,6 +146,15 @@ class SSM(nn.Module):
             (name, self.state_dict()[name].shape) for name in self.training_param_names
         )
         return param_dict
+    
+    def get_parameters_as_vector(self):
+        vec = None
+        for name in self.training_param_names:
+            if vec is None:
+                vec = self.state_dict()[name].flatten()
+            else:
+                vec = torch.cat((vec, self.state_dict()[name].flatten()), 0)
+        return vec
 
 
 # Class implementing a cascade of N SSMs. Linear pre- and post-processing can be modified
@@ -205,6 +216,15 @@ class DeepSSM(nn.Module):
             (name, self.state_dict()[name]) for name in self.training_param_names
         )
         return param_dict
+    
+    def get_parameters_as_vector(self):
+        vec = None
+        for name in self.training_param_names:
+            if vec is None:
+                vec = self.state_dict()[name].flatten()
+            else:
+                vec = torch.cat((vec, self.state_dict()[name].flatten()), 0)
+        return vec
 
 
 if __name__ == "__main__":

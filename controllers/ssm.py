@@ -89,7 +89,7 @@ class SSM(nn.Module):
                  dim_in: int,
                  dim_out: int,
                  dim_internal: int,
-                 dim_hidden: int = 30,
+                 dim_scaffolding: int = 30,
                  scan: bool = False,
                  rmin: float = 0.95,
                  rmax: float = 0.99,
@@ -98,18 +98,19 @@ class SSM(nn.Module):
                  scaffolding_nonlin: str = "MLP"
                  ):
         super().__init__()
+        print('dim hidden: %i, dim internal: %i' % (dim_scaffolding, dim_internal))
 
         # set dimensions
         self.dim_in = dim_in
         self.dim_out = dim_out
         self.dim_internal = dim_internal
-        self.dim_hidden = dim_hidden
+        self.dim_scaffolding = dim_scaffolding
 
         if scaffolding_nonlin == "MLP":
-            self.scaffold = MLP(dim_out, dim_hidden, dim_out)
+            self.scaffold = MLP(dim_out, dim_scaffolding, dim_out)
         elif scaffolding_nonlin == "coupling_layers":
             # Option 2: coupling (or invertible) layers
-            self.scaffold = CouplingLayer(dim_out, dim_hidden)
+            self.scaffold = CouplingLayer(dim_out, dim_scaffolding)
         elif scaffolding_nonlin == "hamiltonian":
             # Option 3: Hamiltonian net
             self.scaffold = HamiltonianSIE(n_layers=4, nf=dim_out, bias=False)
@@ -148,7 +149,7 @@ class DeepSSM(nn.Module):
                  dim_out: int,
                  dim_internal: int,
                  dim_middle: int,
-                 dim_hidden: int = 30,
+                 dim_scaffolding: int = 30,
                  scan: bool = False,
                  # n_ssm: int,
                  rmin: float = 0.9,
@@ -163,21 +164,25 @@ class DeepSSM(nn.Module):
         self.dim_in = dim_in
         self.dim_out = dim_out
         self.dim_internal = dim_internal
-        self.dim_hidden = dim_hidden
+        self.dim_scaffolding = dim_scaffolding
 
         self.ssm1 = SSM(
-            dim_in=dim_in, dim_out=dim_middle, dim_internal=dim_internal, dim_hidden=dim_hidden, 
+            dim_in=dim_in, dim_out=dim_middle, dim_internal=dim_internal, dim_scaffolding=dim_scaffolding, 
             scan=scan, rmin=rmin, rmax=rmax, max_phase=max_phase, scaffolding_nonlin=scaffolding_nonlin,
             internal_state_init=internal_state_init
         )
         self.ssm2 = SSM(
-            dim_in=dim_middle, dim_out=dim_out, dim_internal=dim_internal, dim_hidden=dim_hidden, 
+            dim_in=dim_middle, dim_out=dim_out, dim_internal=dim_internal, dim_scaffolding=dim_scaffolding, 
             scan=scan, rmin=rmin, rmax=rmax, max_phase=max_phase, scaffolding_nonlin=scaffolding_nonlin,
             internal_state_init=internal_state_init
         )
 
         # count number of parameters
         self.num_params = sum(p.numel() for p in self.parameters())
+        print('dim scaffolding: %i, dim middle: %i, dim internal: %i' % (dim_scaffolding, dim_middle, dim_internal))
+        print("DeepSSM has %i parameters." % self.num_params)
+        print("SSM 1 has %i parameters." % sum(p.numel() for p in self.ssm1.parameters()))
+        print("SSM 2 has %i parameters." % sum(p.numel() for p in self.ssm2.parameters()))
 
     def forward(self, u_in):
         y_out = self.ssm2(self.ssm1(u_in))
@@ -205,10 +210,10 @@ if __name__ == "__main__":
     dim_in = 2
     dim_out = 2
     dim_internal = 4
-    dim_hidden = 8
+    dim_scaffolding = 8
     batch_size = 3
-    ssm = SSM(dim_in, dim_out, dim_internal, scan=False, dim_hidden=dim_hidden, scaffolding_nonlin="hamiltonian")
-    deep_ssm = DeepSSM(dim_in, dim_out, dim_internal, dim_middle=6, dim_hidden=dim_hidden, scaffolding_nonlin="hamiltonian")
+    ssm = SSM(dim_in, dim_out, dim_internal, scan=False, dim_scaffolding=dim_scaffolding, scaffolding_nonlin="hamiltonian")
+    deep_ssm = DeepSSM(dim_in, dim_out, dim_internal, dim_middle=6, dim_scaffolding=dim_scaffolding, scaffolding_nonlin="hamiltonian")
 
     # Print dimensions:
     print("B has dimensions: ", ssm.lru.B.shape)

@@ -23,24 +23,29 @@ def argument_parser():
     # controller
     parser.add_argument('--nn-type', type=str, default='SSM',
                         help='Type of the NN for operator Emme in controller. Options: REN or SSM. Default is REN')
-    parser.add_argument('--scaffolding-nonlin', type=str, default='coupling_layers',
-                        help='Type of scaffolding_nonlin in SSMs. Options: MLP, coupling_layers, hamiltonian, tanh. '
-                             'Default coupling_layers.')
-    parser.add_argument('--cont-init-std', type=float, default=0.1,
-                        help='Initialization std for controller params. Default is 0.1.')
     parser.add_argument('--dim-internal', type=int, default=8,
                         help='Dimension of the internal state of the controller. '
                              'Adjusts the size of the linear part of REN. Default is 8.')
-    parser.add_argument('--dim-nl', type=int, default=8, help='size of the non-linear part of REN or hidden layers of SSM. Default is 8.')
     parser.add_argument('--output-amplification', type=float, default=1.0,
                         help='Scaling factor applied to the controller output. Default is 1.0.') # TODO: Note that this used to be 20!
     # SSM-specific parameters
-    parser.add_argument('--rmin', type=float, default=0.9,
+    parser.add_argument('--scaffolding-nonlin', type=str, default=None,
+                        help='Type of scaffolding_nonlin in SSMs. Options: MLP, coupling_layers, hamiltonian, tanh. '
+                             'Default coupling_layers.')
+    parser.add_argument('--dim-middle', type=int, default=None,
+                        help='Middle dimension for SSM deep architecture. Default is 6.')
+    parser.add_argument('--dim-scaffolding', type=int, default=None,
+                        help='Dimension of the hidden layers of scaffolding for SSM architecture. Only used for MLP and coupling_layers scaffolding. Default is 30.')
+    parser.add_argument('--rmin', type=float, default=None,
                         help='Minimum radius for SSM LRU initialization. Default is 0.9.')
-    parser.add_argument('--rmax', type=float, default=1.0,
+    parser.add_argument('--rmax', type=float, default=None,
                         help='Maximum radius for SSM LRU initialization. Default is 1.0.')
-    parser.add_argument('--max-phase', type=float, default=6.283,
+    parser.add_argument('--max-phase', type=float, default=None,
                         help='Maximum phase for SSM LRU initialization. Default is 6.283 (2*pi).')
+    # REN-specific parameters
+    parser.add_argument('--dim-nl', type=int, default=None, help='size of the non-linear part of REN. Default is 8.')
+    parser.add_argument('--cont-init-std', type=float, default=None,
+                        help='Initialization std for REN params. Default is 0.1.')
 
     # loss
     parser.add_argument('--alpha-u', type=float, default=0.1/400, help='Weight of the loss due to control input "u". Default is 0.1/400.') # Note: should use output_amplification^2 instead of 400? makes sense to depend on amplification
@@ -61,6 +66,9 @@ def argument_parser():
     parser.add_argument('--tol-percentage', type=float, default=0.05, help='Early stopping if the validation loss does not improve by at least tol percentage during the last n_logs_no_change logged epochs. Default is 0.05%.')
 
     args = parser.parse_args()
+
+    # set defaults for REN and SSM parameters based on the type of the operator
+    args = set_ren_ssm_defaults(args)
 
     # set default values that depend on other args
     if args.batch_size == -1:
@@ -105,12 +113,13 @@ def print_args(args):
     msg += '\n[INFO] Plant: spring constant: %.2f' % args.spring_const + ' -- use linearized plant: ' + str(args.linearize_plant)
 
     msg += '\n[INFO] Controller using %ss: dimension of the internal state: %i' % (args.nn_type, args.dim_internal)
-    msg += ' -- dim_nl: %i' % args.dim_nl
     msg += ' -- output_amplification: %.1f' % args.output_amplification
     if args.nn_type == 'REN':
         msg += ' -- cont_init_std: %.2f' % args.cont_init_std
+        msg += ' -- dim_nl: %i' % args.dim_nl
     if args.nn_type == 'SSM':
         msg += ' -- scaffolding_nonlin: %s' % args.scaffolding_nonlin
+        msg += ' -- dim_middle: %i' % args.dim_middle + ' -- dim_scaffolding: %i' % args.dim_scaffolding
         msg += ' -- rmin: %.2f' % args.rmin + ' -- rmax: %.2f' % args.rmax + ' -- max_phase: %.3f' % args.max_phase
 
     msg += '\n[INFO] Loss:  alpha_u: %.6f' % args.alpha_u
@@ -138,3 +147,33 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+    
+def set_ren_ssm_defaults(args):
+    """
+    Set default values for REN and SSM parameters based on the type of controller.
+    """
+    if args.nn_type == 'REN':
+        # set REN defaults
+        args.dim_nl = 8 if args.dim_nl is None else args.dim_nl
+        args.cont_init_std = 0.1 if args.cont_init_std is None else args.cont_init_std
+        # check none of SSM parameters are set
+        assert args.scaffolding_nonlin is None, 'scaffolding_nonlin should not be set for REN.'
+        assert args.dim_middle is None, 'dim_middle should not be set for REN.'
+        assert args.dim_scaffolding is None, 'dim_scaffolding should not be set for REN.'
+        assert args.rmin is None, 'rmin should not be set for REN.'
+        assert args.rmax is None, 'rmax should not be set for REN.'
+        assert args.max_phase is None, 'max_phase should not be set for REN.'
+    elif args.nn_type == 'SSM':
+        # set SSM defaults
+        args.scaffolding_nonlin = 'coupling_layers' if args.scaffolding_nonlin is None else args.scaffolding_nonlin
+        args.dim_middle = 6 if args.dim_middle is None else args.dim_middle
+        args.dim_scaffolding = 30 if args.dim_scaffolding is None else args.dim_scaffolding
+        args.rmin = 0.9 if args.rmin is None else args.rmin
+        args.rmax = 1.0 if args.rmax is None else args.rmax
+        args.max_phase = 6.283 if args.max_phase is None else args.max_phase
+        # check none of REN parameters are set
+        assert args.dim_nl is None, 'dim_nl should not be set for SSM.'
+        assert args.cont_init_std is None, 'cont_init_std should not be set for SSM.'
+    else:
+        raise ValueError('Unknown nn_type: %s' % args.nn_type)
+    return args

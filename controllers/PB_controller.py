@@ -24,20 +24,20 @@ class PerfBoostController(nn.Module):
                  output_init: torch.Tensor,
                  nn_type: str = "REN",
                  dim_internal: int = 8,
-                 dim_nl: int = 8,
+                 output_amplification: float = 20,
                  # SSM properties
                  scaffolding_nonlin: str = None,
                  dim_middle: int = 6,
+                 dim_scaffolding: int = 30,
                  rmin: float = 0.9,
                  rmax: float = 1.0,
                  max_phase: float = 6.283,
                  # acyclic REN properties
+                 dim_nl: int = 8,
                  initialization_std: float = 0.5,
                  pos_def_tol: float = 0.001,
                  contraction_rate_lb: float = 1.0,
                  ren_internal_state_init=None,
-                 # misc
-                 output_amplification: float = 20,
                  ):
         """
          Args:
@@ -45,14 +45,16 @@ class PerfBoostController(nn.Module):
             input_init (torch.Tensor):    Initial input to the controller.
             output_init (torch.Tensor):   Initial output from the controller before anything is calculated.
             nn_type (str):                Which NN model to use for the Emme operator (Options: 'REN' or 'SSM')
-            non_linearity (str):          Non-linearity used in SSMs for scaffolding.
+            dim_internal (int):           Internal state (x) dimension.
             output_amplification (float): Scaling factor applied to the controller output. Default is 20.
             ##### SSM-specific args:
+            scaffolding_nonlin (str):     Non-linearity used in SSMs for scaffolding.
+            dim_middle (int):             [Optional] Middle dimension for SSM deep architecture. Default is 6.
+            dim_scaffolding (int):        [Optional] Dimension of the hidden layers of scaffolding for SSM architecture. Only used for MLP and coupling_layers scaffolding. Default is 30.
             rmin (float):                 [Optional] Minimum radius for SSM LRU initialization. Default is 0.9.
             rmax (float):                 [Optional] Maximum radius for SSM LRU initialization. Default is 1.0.
             max_phase (float):            [Optional] Maximum phase for SSM LRU initialization. Default is 6.283.
-            ##### the following are the same as AcyclicREN args:
-            dim_internal (int):           Internal state (x) dimension.
+            ##### REN-specific args:
             dim_nl (int):                 Dimension of the input ("v") and output ("w") of the NL static block of REN.
             initialization_std (float):   [Optional] Weight initialization. Set to 0.1 by default.
             pos_def_tol (float):          [Optional] Positive and negligible scalar to force positive definite matrices.
@@ -88,7 +90,7 @@ class PerfBoostController(nn.Module):
                 dim_out=self.dim_out,
                 dim_internal=dim_internal,
                 dim_middle=dim_middle,
-                dim_hidden=dim_nl,
+                dim_scaffolding=dim_scaffolding,
                 scan=False,
                 rmin=rmin,
                 rmax=rmax,
@@ -98,6 +100,9 @@ class PerfBoostController(nn.Module):
             ).to(device)
         else:
             raise ValueError("Model for emme not implemented")
+        
+        # set the number of parameters
+        self.num_params = sum(p.numel() for p in self.emme.parameters() if p.requires_grad)
 
         # define the system dynamics without process noise
         self.noiseless_forward = noiseless_forward

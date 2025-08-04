@@ -71,15 +71,25 @@ ctl = PerfBoostController(noiseless_forward=sys.noiseless_forward,
                           input_init=sys.x_init,
                           output_init=sys.u_init,
                           nn_type=args.nn_type,
-                          scaffolding_nonlin=args.scaffolding_nonlin,
                           dim_internal=args.dim_internal,
-                          dim_nl=args.dim_nl,
+                          output_amplification=args.output_amplification,
+                          # SSM properties
+                          scaffolding_nonlin=args.scaffolding_nonlin,
+                          dim_middle=args.dim_middle,
+                          dim_scaffolding=args.dim_scaffolding,
                           rmin=args.rmin,
                           rmax=args.rmax,
                           max_phase=args.max_phase,
+                          # REN properties
+                          dim_nl=args.dim_nl,
                           initialization_std=args.cont_init_std,
-                          output_amplification=args.output_amplification,
+                          #   pos_def_tol=args.pos_def_tol,
+                          # contraction_rate_lb = args.contraction_rate_lb,
+                          # ren_internal_state_init=None,  # None for random initialization
                           ).to(device)
+
+logger.info('[INFO] The internal operator emme is of type ' + args.nn_type + ' with %i parameters.' % ctl.num_params)
+
 # plot closed-loop trajectories before training the controller
 logger.info('Plotting closed-loop trajectories before training the controller...')
 x_log, _, u_log = sys.rollout(ctl, plot_data)

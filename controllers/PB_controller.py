@@ -5,7 +5,6 @@ import numpy as np
 from config import device
 from .contractive_ren import ContractiveREN
 from controllers.ssm import DeepSSM
-from assistive_functions import to_tensor
 
 
 class PerfBoostController(nn.Module):
@@ -107,10 +106,6 @@ class PerfBoostController(nn.Module):
         # define the system dynamics without process noise
         self.noiseless_forward = noiseless_forward
 
-        # Internal variables
-        self.t = None
-        self.last_input = None
-        self.last_output = None
         # Initialize internal variables
         self.reset()
 

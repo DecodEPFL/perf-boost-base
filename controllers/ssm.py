@@ -1,8 +1,12 @@
 import math
 import torch
+import sys, os
 import torch.nn as nn
 import torch.nn.functional as F
 from collections import OrderedDict
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, BASE_DIR)
 
 from controllers.non_linearities import MLP, HamiltonianSIE, CouplingLayer
 
@@ -98,7 +102,6 @@ class SSM(nn.Module):
                  scaffolding_nonlin: str = "MLP"
                  ):
         super().__init__()
-        print('dim hidden: %i, dim internal: %i' % (dim_scaffolding, dim_internal))
 
         # set dimensions
         self.dim_in = dim_in
@@ -121,6 +124,9 @@ class SSM(nn.Module):
             raise NotImplementedError("The scaffolding_nonlin %s is not implemented" % scaffolding_nonlin)
         self.lru = LRU(dim_in, dim_out, dim_internal, scan, rmin, rmax, max_phase, internal_state_init)
         self.lin = nn.Linear(dim_in, dim_out, bias=False)
+
+        self.training_param_names = self.state_dict().keys()
+
         nn.init.zeros_(self.lin.weight.data)
 
     def forward(self, u):
@@ -128,16 +134,14 @@ class SSM(nn.Module):
         return result
 
     def get_named_parameters(self):
-        print("CLARA: Not working! self.training_param_names is not defined!")
         param_dict = OrderedDict(
-            (name, getattr(self, name)) for name in self.training_param_names
+            (name, self.state_dict()[name]) for name in self.training_param_names
         )
         return param_dict
 
     def get_parameter_shapes(self):
-        print("CLARA: Not working! self.training_param_names is not defined!")
         param_dict = OrderedDict(
-            (name, getattr(self, name).shape) for name in self.training_param_names
+            (name, self.state_dict()[name].shape) for name in self.training_param_names
         )
         return param_dict
 
@@ -178,11 +182,8 @@ class DeepSSM(nn.Module):
         )
 
         # count number of parameters
-        self.num_params = sum(p.numel() for p in self.parameters())
-        print('dim scaffolding: %i, dim middle: %i, dim internal: %i' % (dim_scaffolding, dim_middle, dim_internal))
-        print("DeepSSM has %i parameters." % self.num_params)
-        print("SSM 1 has %i parameters." % sum(p.numel() for p in self.ssm1.parameters()))
-        print("SSM 2 has %i parameters." % sum(p.numel() for p in self.ssm2.parameters()))
+        self.training_param_names = self.state_dict().keys()
+        self.num_params = sum(p.numel() for p in self.state_dict().values())
 
     def forward(self, u_in):
         y_out = self.ssm2(self.ssm1(u_in))
@@ -195,13 +196,13 @@ class DeepSSM(nn.Module):
     # setters and getters
     def get_parameter_shapes(self):
         param_dict = OrderedDict(
-            (name, getattr(self, name).shape) for name in self.training_param_names
+            (name, self.state_dict()[name].shape) for name in self.training_param_names
         )
         return param_dict
 
     def get_named_parameters(self):
         param_dict = OrderedDict(
-            (name, getattr(self, name)) for name in self.training_param_names
+            (name, self.state_dict()[name]) for name in self.training_param_names
         )
         return param_dict
 
@@ -215,6 +216,9 @@ if __name__ == "__main__":
     ssm = SSM(dim_in, dim_out, dim_internal, scan=False, dim_scaffolding=dim_scaffolding, scaffolding_nonlin="hamiltonian")
     deep_ssm = DeepSSM(dim_in, dim_out, dim_internal, dim_middle=6, dim_scaffolding=dim_scaffolding, scaffolding_nonlin="hamiltonian")
 
+    print(ssm.get_parameter_shapes())
+    exit()
+    
     # Print dimensions:
     print("B has dimensions: ", ssm.lru.B.shape)
     print("C has dimensions: ", ssm.lru.C.shape)
